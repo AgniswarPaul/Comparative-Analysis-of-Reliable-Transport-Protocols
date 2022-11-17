@@ -87,7 +87,7 @@ void A_input(struct pkt packet) {
         if(packet.ackowledgement_number == A.seq_num_of_A){
             stoptimer(0);
             A.seq_num_of_A = 1 - A.seq_num_of_A;
-            A.A_is_ready_to_transmit = false;
+            A.A_is_ready_to_transmit = true;
         }
     }
     else{
@@ -100,9 +100,11 @@ bool ispacket_not_corrupt(struct pkt packet){
     if(packet.checksum == build_checksum(packet)){
         return true;
     }
+    else{
         return false;
+    }
+        
 }
-
 
 void B_init(){
     B.seq_B = 0;
@@ -111,16 +113,21 @@ void B_init(){
 
 void B_input(struct pkt packet) {
     char data[20];
-    int ack_checksum;
-    strncpy(data,packet.payload,20);
-    ack_checksum = build_checksum(packet);
+    int data_len = *(&data + 1) - data;
+    int receiver_checksum;
+    int i = 0;
+    while (i < data_len){
+            packet.payload[i] = data[i];
+            i++;
+    }
+    receiver_checksum = build_checksum(packet);
     struct pkt ack;
-    if((ack_checksum == packet.checksum) && (packet.sequence_number == B.seq_B)){
+    if((receiver_checksum == packet.checksum) && (packet.sequence_number == B.seq_B)){
         tolayer5(1,data);
-        ack.acknum = B.seq_B;
+        ack.ackowledgement_number = B.seq_B;
         ack.checksum = build_checksum(packet);
         tolayer3(1,ack);
-        B.seq_B = 1 - B.seq_B;
+        B.seq_B = 1 - B.seq_B; // Doubt
     }
     else{
         ack.ackowledgement_number = 1 - B.seq_B;
