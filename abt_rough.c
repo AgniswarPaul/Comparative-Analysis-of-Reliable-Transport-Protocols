@@ -42,6 +42,13 @@ int build_checksum(packet)
     return checksum;
 }
 
+void A_init()
+{
+    A.A_is_ready_to_transmit = true;
+    A.seq_A = 0;
+    A.ack_A = 0;
+}
+
 void A_output(message)
 {
     if (A.A_is_ready_to_transmit)
@@ -62,16 +69,6 @@ void A_output(message)
     }
 }
 
-void A_init()
-{
-    A.A_is_ready_to_transmit = true;
-    A.seq_A = 0;
-    A.ack_A = 0;
-}
-
-void B_init(){
-    B.seq_B = 0;
-}
 
 void A_timerinterrupt()
 {
@@ -100,6 +97,12 @@ bool ispacket_not_corrupt(struct pkt packet){
     }
         return false;
 }
+
+
+void B_init(){
+    B.seq_B = 0;
+}
+
 
 void B_input(struct pkt packet) {
     char data[20];
