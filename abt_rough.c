@@ -38,7 +38,7 @@ int build_checksum(struct pkt packet)
     checksum = checksum + packet.ackowledgement_number;
     for (int i = 0; i < message.data_len; i = i+1) {
         checksum = checksum + packet.payload[i];
-    }
+    } // can put while loop instead
     return checksum;
 }
 
@@ -64,7 +64,7 @@ void A_output(message)
             i++;
         }
         packet.checksum = build_checksum(packet);
-        A.buffer_packet_A = packet;
+        A.buffer_packet_A = packet; // doubt - in case of re-transmission??
         tolayer3(0, packet);
         starttimer(0, TIMEOUT);
     }
@@ -120,14 +120,14 @@ void B_input(struct pkt packet) {
             packet.payload[i] = data[i];
             i++;
     }
-    receiver_checksum = build_checksum(packet);
+    receiver_checksum = build_checksum(packet); // doubt
     struct pkt ack;
     if((receiver_checksum == packet.checksum) && (packet.sequence_number == B.seq_B)){
         tolayer5(1,data);
         ack.ackowledgement_number = B.seq_B;
         ack.checksum = build_checksum(packet);
         tolayer3(1,ack);
-        B.seq_B = 1 - B.seq_B; // Doubt
+        B.seq_B = 1 - B.seq_B; 
     }
     else{
         ack.ackowledgement_number = 1 - B.seq_B;
