@@ -70,7 +70,7 @@ void A_output(message)
     }
     else
     {
-        printf("Host A is not ready to receive any new message");
+        printf("Host A is not ready to receive any new message and its waiting to receive an acknowledgement");
     }
 }
 
