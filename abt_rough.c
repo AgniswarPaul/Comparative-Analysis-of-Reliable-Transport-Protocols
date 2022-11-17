@@ -57,7 +57,7 @@ void A_output(message)
         struct pkt packet;
         packet.sequence_number = A.seq_A;
         packet.ackowledgement_number = A.ack_A;
-        strncpy(packet.payload, message.data, 20);
+        strncpy(packet.payload, message.data, message.data);
         packet.checksum = build_checksum(packet);
         A.buffer_packet_A = packet;
         tolayer3(0, packet);
