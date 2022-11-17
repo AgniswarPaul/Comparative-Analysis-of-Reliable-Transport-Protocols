@@ -4,8 +4,8 @@ float TIMEOUT = 20.0;
 
 struct HostA
 {
-    int seq_A;
-    int ack_A;
+    int seq_num_of_A;
+    int ack_num_of_A;
     bool A_is_ready_to_transmit;
     struct pkt buffer_pakcet_A;
 } A;
@@ -45,8 +45,8 @@ int build_checksum(packet)
 void A_init()
 {
     A.A_is_ready_to_transmit = true;
-    A.seq_A = 0;
-    A.ack_A = 0;
+    A.seq_num_of_A = 0;
+    A.ack_num_of_A = 0;
 }
 
 void A_output(message)
@@ -55,8 +55,8 @@ void A_output(message)
     {
         A.A_is_ready_to_transmit = false;
         struct pkt packet;
-        packet.sequence_number = A.seq_A;
-        packet.ackowledgement_number = A.ack_A;
+        packet.sequence_number = A.seq_num_of_A;
+        packet.ackowledgement_number = A.ack_num_of_A;
         strncpy(packet.payload, message.data, message.data);
         packet.checksum = build_checksum(packet);
         A.buffer_packet_A = packet;
@@ -79,9 +79,9 @@ void A_timerinterrupt()
 
 void A_input(struct pkt packet) {
     if (ispacket_not_corrupt(packet)){
-        if(packet.ackowledgement_number == A.seq_A){
+        if(packet.ackowledgement_number == A.seq_num_of_A){
             stoptimer(0);
-            A.seq_A = 1 - A.seq_A;
+            A.seq_num_of_A = 1 - A.seq_num_of_A;
             A.A_is_ready_to_transmit = false;
         }
     }
