@@ -35,3 +35,32 @@ int main()
 }
 
 //////////////////////////////////////////////////////////////////////
+
+struct msg
+{
+    char data[20];
+    int data_len;
+} message;
+
+struct pkt
+{
+    int sequence_number;
+    int ackowledgement_number;
+    int checksum;
+    char payload[20];
+} packet;
+
+
+int main(){
+    message.data_len = *(&message.data + 1) - message.data;
+    int i = 0;
+    while (i < message.data_len){
+        packet.payload[i] = message.data[i];
+        i++;
+    }
+    printf("Length: %s\n", packet.payload);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+

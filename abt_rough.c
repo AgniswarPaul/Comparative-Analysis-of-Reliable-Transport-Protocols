@@ -54,10 +54,14 @@ void A_output(message)
     if (A.A_is_ready_to_transmit)
     {
         A.A_is_ready_to_transmit = false;
-        struct pkt packet;
         packet.sequence_number = A.seq_num_of_A;
         packet.ackowledgement_number = A.ack_num_of_A;
-        strncpy(packet.payload, message.data, message.data);
+        message.data_len = *(&message.data + 1) - message.data;
+        int i = 0;
+        while (i < message.data_len){
+            packet.payload[i] = message.data[i];
+            i++;
+        }
         packet.checksum = build_checksum(packet);
         A.buffer_packet_A = packet;
         tolayer3(0, packet);
