@@ -28,9 +28,9 @@ struct pkt
     int ackowledgement_number;
     int checksum;
     char payload[20];
-} packet;
+};
 
-int build_checksum(packet)
+int build_checksum(struct pkt packet)
 {
     int checksum = 0;
     message.data_len = *(&message.data + 1) - message.data;
@@ -54,6 +54,7 @@ void A_output(message)
     if (A.A_is_ready_to_transmit)
     {
         A.A_is_ready_to_transmit = false;
+        struct pkt packet;
         packet.sequence_number = A.seq_num_of_A;
         packet.ackowledgement_number = A.ack_num_of_A;
         message.data_len = *(&message.data + 1) - message.data;
