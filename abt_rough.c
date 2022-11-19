@@ -135,4 +135,3 @@ void B_input(struct pkt packet) {
         tolayer3(1, ack);
     }
 }
-
