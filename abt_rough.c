@@ -1,13 +1,14 @@
-#include <stdio.h> 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 float TIMEOUT = 20.0;
 
 struct HostA
 {
-    int seq_num_of_A;
-    int ack_num_of_A;
-    bool A_is_ready_to_transmit;
-    struct pkt buffer_pakcet_A;
+    int seq_A;
+    int ack_A;
+    bool A_wait_ACK;
 } A;
 
 struct HostB
@@ -19,7 +20,6 @@ struct HostB
 struct msg
 {
     char data[20];
-    // int data_len;
 };
 
 struct pkt
@@ -30,23 +30,26 @@ struct pkt
     char payload[20];
 };
 
+struct pkt packet_buffer[1000];
+int first_packet = 0;
+int last_packet = -1;
+
 int build_checksum(struct pkt packet)
 {
     int checksum = 0;
-    // message.data_len = *(&message.data + 1) - message.data;
     checksum = checksum + packet.sequence_number;
     checksum = checksum + packet.ackowledgement_number;
     for (int i = 0; i < 20; i = i+1) {
         checksum = checksum + packet.payload[i];
-    } // can put while loop instead
+    } 
     return checksum;
 }
 
 void A_init()
 {
-    A.A_is_ready_to_transmit = true;
-    A.seq_num_of_A = 0;
-    A.ack_num_of_A = 0;
+    A.A_wait_ACK = false;
+    A.seq_A = 0;
+    A.ack_A = 0;
 }
 
 void A_output(struct msg message)
@@ -57,7 +60,6 @@ void A_output(struct msg message)
         struct pkt packet;
         packet.sequence_number = A.seq_num_of_A;
         packet.ackowledgement_number = A.ack_num_of_A;
-        // message.data_len = *(&message.data + 1) - message.data;
         int i = 0;
         while (i < 20){
             packet.payload[i] = message.data[i];
