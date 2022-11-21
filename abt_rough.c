@@ -24,11 +24,13 @@ struct msg
 
 struct pkt
 {
-    int sequence_number;
-    int ackowledgement_number;
+    int seqnum;
+    int acknum;
     int checksum;
     char payload[20];
 };
+
+
 
 struct pkt packet_buffer[1000];
 int first_packet = 0;
@@ -37,8 +39,8 @@ int last_packet = -1;
 int build_checksum(struct pkt packet)
 {
     int checksum = 0;
-    checksum = checksum + packet.sequence_number;
-    checksum = checksum + packet.ackowledgement_number;
+    checksum = checksum + packet.seqnum;
+    checksum = checksum + packet.acknum;
     for (int i = 0; i < 20; i = i+1) {
         checksum = checksum + packet.payload[i];
     } 
@@ -58,8 +60,8 @@ void A_output(struct msg message)
     {
         A.A_wait_ACK = true;
         struct pkt packet;
-        packet.sequence_number = A.seq_A;
-        packet.ackowledgement_number = A.ack_A;
+        packet.seqnum = A.seq_A;
+        packet.acknum = A.ack_A;
         int i = 0;
         while (i < 20){
             packet.payload[i] = message.data[i];
@@ -88,7 +90,7 @@ void A_timerinterrupt()
 
 void A_input(struct pkt packet) {
     if (ispacket_not_corrupt(packet)){
-        if(packet.ackowledgement_number == A.seq_num_of_A){
+        if(packet.acknum == A.seq_num_of_A){
             stoptimer(0);
             A.seq_A = 1 - A.seq_A;
             A.A_wait_ACK = false;
@@ -134,9 +136,9 @@ void B_input(struct pkt packet) {
     }
     receiver_checksum = build_checksum(packet); 
     struct pkt ack;
-    if((receiver_checksum == packet.checksum) && (packet.sequence_number == B.seq_B)){
+    if((receiver_checksum == packet.checksum) && (packet.seqnum == B.seq_B)){
         tolayer5(1,data);
-        ack.ackowledgement_number = B.seq_B;
+        ack.acknum = B.seq_B;
         ack.checksum = build_checksum(packet);
         while (i < data_len){
             ack.payload[i] = data[i];
@@ -146,7 +148,7 @@ void B_input(struct pkt packet) {
         B.seq_B = 1 - B.seq_B; 
     }
     else{
-        ack.ackowledgement_number = 1 - B.seq_B;
+        ack.acknum = 1 - B.seq_B;
         ack.checksum = build_checksum(packet);
         tolayer3(1, ack);
     }
