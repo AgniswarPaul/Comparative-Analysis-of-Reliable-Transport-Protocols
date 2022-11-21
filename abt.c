@@ -6,8 +6,7 @@ struct HostA
 {
     int seq_A;
     int ack_A;
-    bool A_is_ready_to_transmit;
-    struct pkt buffer_pakcet_A;
+    bool A_wait_ACK;
 } A;
 
 struct HostB
@@ -29,6 +28,12 @@ struct pkt
     char payload[20];
 };
 
+struct pkt packet_buffer[1000];
+int first_packet = 0;
+int last_packet = -1;
+
+
+
 int build_checksum(struct pkt packet)
 {
     int checksum = 0;
@@ -41,15 +46,16 @@ int build_checksum(struct pkt packet)
 
 void A_output(struct msg message)
 {
-    if (A.A_is_ready_to_transmit)
+    if (!A.A_wait_ACK)
     {
-        A.A_is_ready_to_transmit = false;
+        A.A_wait_ACK = true;
         struct pkt packet;
         packet.sequence_number = A.seq_A;
         packet.ackowledgement_number = A.ack_A;
         strncpy(packet.payload, message.data, 20);
         packet.checksum = build_checksum(packet);
-        A.buffer_packet_A = packet;
+        last_packet += 1;
+        packet_buffer[last_packet] = packet;
         tolayer3(0, packet);
         starttimer(0, TIMEOUT);
     }
@@ -61,7 +67,7 @@ void A_output(struct msg message)
 
 void A_init()
 {
-    A.A_is_ready_to_transmit = true;
+    A.A_wait_ACK = false;
     A.seq_A = 0;
     A.ack_A = 0;
 }
@@ -72,8 +78,8 @@ void B_init(){
 
 void A_timerinterrupt()
 {
-    A.A_is_ready_to_transmit = false;
-    tolayer3(0, A.buffer_packet_A);
+    A.A_wait_ACK = true;
+    tolayer3(0, packet_buffer[first_packet]);
     starttimer(0, TIMEOUT);
 }
 
@@ -82,7 +88,15 @@ void A_input(struct pkt packet) {
         if(packet.ackowledgement_number == A.seq_A){
             stoptimer(0);
             A.seq_A = 1 - A.seq_A;
-            A.A_is_ready_to_transmit = false;
+            A.A_wait_ACK = false;
+            if(packet_buffer[first_packet] != NULL)
+            {
+                struct pkt retransmit_packet;
+                retransmit_packet = packet_buffer[first_packet];
+                first_packet += 1;
+                tolayer3(0, retransmit_packet);
+                A.A_wait_ACK = true;
+            }
         }
     }
     else{
