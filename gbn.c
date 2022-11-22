@@ -1,4 +1,62 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 float TIMEOUT = 20.0;
+
+int next_position;
+int next_seq_num=0;
+int base_val;
+int window_size;
+int request_seq_num;
+int buffer=0;
+int sequence_number = 0;
+int last_packet_sent = 0;
+
+
+struct msg message_last;
+struct msg acknowledgement_ack;
+ 
+
+struct packet_details{
+    struct pkt packet;
+    bool packet_sent;
+    bool acknowledgement;
+}
+
+struct packet_details *packetdata;
+
+
+void A_output(struct msg message){
+    struct pkt packet;
+    packet.seqnum = A.seq_A;
+    packet.acknum = 0;
+    strncpy(packet.payload,message.data, 20);
+    packet.checksum = get_checksum(packet);
+    packetdata[next_position].packet = packet;
+    packetdata[next_position].packet_sent = false;
+    packetdata[next_position].acknowledgement = false;
+    if(next_seq_num < base_val + window_size){
+        if(next_seq_num == base_val){
+            starttimer(0, TIMEOUT);
+        }
+        if(packetdata[next_seq_num].packet_sent == false && packetdata[next_seq_num].acknowledgement == false){
+            tolayer3(0, packetdata[next_seq_num].packet);
+            
+        }
+    }
+
+    next_seq_num++;
+    next_position++;
+    A.seq_A++;
+
+}
+
+
+
+
+
+
 
 struct HostA
 {
