@@ -8,7 +8,7 @@ struct HostA
 {
     int seq_A;
     int ack_A;
-    bool A_wait_ACK;
+    bool A_ready_to_transmit;
 } A;
 
 struct HostB
@@ -21,6 +21,8 @@ struct msg
 {
     char data[20];
 };
+
+queue<msg> buffer;
 
 struct pkt
 {
@@ -49,16 +51,16 @@ int build_checksum(struct pkt packet)
 
 void A_init()
 {
-    A.A_wait_ACK = false;
+    A.A_ready_to_transmit = true;
     A.seq_A = 0;
     A.ack_A = 0;
 }
 
 void A_output(struct msg message)
 {
-    if (!A.A_wait_ACK)
+    if (A.A_ready_to_transmit)
     {
-        A.A_wait_ACK = true;
+        A.A_ready_to_transmit = false;
         struct pkt packet;
         packet.seqnum = A.seq_A;
         packet.acknum = A.ack_A;
@@ -82,7 +84,7 @@ void A_output(struct msg message)
 
 void A_timerinterrupt()
 {
-    A.A_wait_ACK = true;
+    A.A_ready_to_transmit = true;
     tolayer3(0, packet_buffer[first_packet]);
     starttimer(0, TIMEOUT);
 }
@@ -93,14 +95,14 @@ void A_input(struct pkt packet) {
         if(packet.acknum == A.seq_num_of_A){
             stoptimer(0);
             A.seq_A = 1 - A.seq_A;
-            A.A_wait_ACK = false;
+            A.A_ready_to_transmit = false;
             if(packet_buffer[first_packet] != NULL)
             {
                 struct pkt retransmit_packet;
                 retransmit_packet = packet_buffer[first_packet];
                 first_packet += 1;
                 tolayer3(0, retransmit_packet);
-                A.A_wait_ACK = true;
+                A.A_ready_to_transmit = true;
             }
         }
     }
