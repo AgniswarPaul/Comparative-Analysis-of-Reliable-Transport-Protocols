@@ -126,30 +126,19 @@ void B_init(){
 
 
 void B_input(struct pkt packet) {
-    char data[20]; // we can remove this part. Right??
-    int data_len = *(&data + 1) - data;
-    int receiver_checksum;
-    int i = 0;
-    while (i < data_len){
-            packet.payload[i] = data[i];
-            i++;
-    }
-    receiver_checksum = build_checksum(packet); 
-    struct pkt ack;
-    if((receiver_checksum == packet.checksum) && (packet.seqnum == B.seq_B)){
-        tolayer5(1,data);
-        ack.acknum = B.seq_B;
-        ack.checksum = build_checksum(packet);
-        while (i < data_len){
-            ack.payload[i] = data[i];
-            i++;
-    }
-        tolayer3(1,ack);
-        B.seq_B = 1 - B.seq_B; 
+    pkt livepacket = {};
+    if(ispacket_not_corrupt(packet) && (packet.seqnum==B.seq_B))
+    {
+        tolayer5(1,packet.payload);
+        livepacket.acknum = B.seq_B;
+        livepacket.checksum = build_checksum(livepacket);
+        tolayer3(1,livepacket);
+        B.seq_B = 1-B.seq_B;
     }
     else{
-        ack.acknum = 1 - B.seq_B;
-        ack.checksum = build_checksum(packet);
-        tolayer3(1, ack);
+        livepacket.acknum = 1-B.seq_B;
+        livepacket.checksum = build_checksum(packet);
+        tolayer3(1, livepacket);
     }
+
 }
