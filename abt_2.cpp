@@ -32,6 +32,8 @@ struct pkt
     char payload[20];
 };
 
+struct pkt livepacket;
+
 
 int build_checksum(struct pkt packet)
 {
@@ -56,16 +58,16 @@ void A_output(struct msg message)
     if (A.A_ready_to_transmit)
     {
         A.A_ready_to_transmit = false;
-        struct pkt packet;
-        packet.seqnum = A.seq_A;
-        packet.acknum = A.ack_A;
+        livepacket = {};
+        livepacket.seqnum = A.seq_A;
+        livepacket.acknum = A.ack_A;
         int i = 0;
         while (i < 20){
-            packet.payload[i] = message.data[i];
+            livepacket.payload[i] = message.data[i];
             i++;
         }
-        packet.checksum = build_checksum(packet);
-        tolayer3(0, packet);
+        livepacket.checksum = build_checksum(livepacket);
+        tolayer3(0, livepacket);
         starttimer(0, TIMEOUT);
     }
     else
@@ -76,12 +78,6 @@ void A_output(struct msg message)
 }
 
 
-void A_timerinterrupt()
-{
-    A.A_ready_to_transmit = true;
-    tolayer3(0, packet_buffer[first_packet]);
-    starttimer(0, TIMEOUT);
-}
 
 
 void A_input(struct pkt packet) {
@@ -105,6 +101,13 @@ void A_input(struct pkt packet) {
         printf("1)packet could be corrupted or 2)sequence and acknowledegement numbers don't match\n");
     }
  
+}
+
+void A_timerinterrupt()
+{
+    A.A_ready_to_transmit = false;
+    tolayer3(0, livepacket);
+    starttimer(0, TIMEOUT);
 }
 
 bool ispacket_not_corrupt(struct pkt packet){
