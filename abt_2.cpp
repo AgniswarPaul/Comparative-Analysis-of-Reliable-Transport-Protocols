@@ -33,11 +33,6 @@ struct pkt
 };
 
 
-
-struct pkt packet_buffer[1000];
-int first_packet = 0;
-int last_packet = -1;
-
 int build_checksum(struct pkt packet)
 {
     int checksum = 0;
@@ -70,14 +65,13 @@ void A_output(struct msg message)
             i++;
         }
         packet.checksum = build_checksum(packet);
-        last_packet += 1;
-        packet_buffer[last_packet] = packet;
         tolayer3(0, packet);
         starttimer(0, TIMEOUT);
     }
     else
     {
         printf("Host A is not ready to receive any new message and its waiting to receive an acknowledgement");
+        buffer.push(message);
     }
 }
 
@@ -95,14 +89,15 @@ void A_input(struct pkt packet) {
         if(packet.acknum == A.seq_num_of_A){
             stoptimer(0);
             A.seq_A = 1 - A.seq_A;
-            A.A_ready_to_transmit = false;
-            if(packet_buffer[first_packet] != NULL)
+            if(!buffer.empty())
             {
-                struct pkt retransmit_packet;
-                retransmit_packet = packet_buffer[first_packet];
-                first_packet += 1;
-                tolayer3(0, retransmit_packet);
+                struct msg next_message = buffer.front();
+                buffer.pop();
                 A.A_ready_to_transmit = true;
+                A_output(next_message);	
+            }
+            else{
+                A.A_ready_to_transmit = true;  // In case buffer is empty
             }
         }
     }
