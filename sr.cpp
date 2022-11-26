@@ -55,6 +55,7 @@ struct HostB
     int seq_B;
     int ack_B;
     int size_of_window;
+    int base_number;
     struct pkt B;
 } B;
 
@@ -90,7 +91,7 @@ void udt_send(int seqnum, bool sr) // change name
         pkt livepacket = {};
         int i=0;
         while (i < 20){
-            livepacket.payload[i] = message.data[i];
+            livepacket.payload[i] = message.data[i]; // Need to change into a different function
             i++;
         }
         livepacket.seqnum = seqnum;
@@ -100,16 +101,68 @@ void udt_send(int seqnum, bool sr) // change name
         buffer[seqnum].simtime = get_sim_time();
         packettimer.push_back(seqnum);
 
+        if(packettimer.size() == 1)
+        {
+            starttimer(0,TIMEOUT);
+        }
+        
+    else if ((A.next_seq_A >= A.base_number) && (A.next_seq_A <= A.base_number + A.size_of_window))
+    {
+        
+        messagetopacket(buffer[A.next_seq_A],A.next_seq_A,A.ack_A);
+        pkt livepacket = {};
+        int i=0;
+        while (i < 20){
+            livepacket.payload[i] = message.data[i];
+            i++;
+        }
+        livepacket.seqnum = A.next_seq_A;
+        livepacket.acknum = A.ack_A;
+        livepacket.checksum = build_checksum(livepacket);
+        tolayer3(0,livepacket); 
+        buffer[A.next_seq_A].start = get_sim_time();
+        packettime.push_back(A.next_seq_A);
+
         if(packettime.size() == 1)
         {
-            starttimer(0,RTT);
+            
+            starttimer(0,TIMEOUT);
         }
+            
+
+        A.next_seq_A++;
+    }
+
 
    
     }
     
 }
 
+int bufferatB(int B.base_number)
+{
+
+    map <int, pkt> :: iterator i;
+    i = bufferB.find(B.base_number);
+
+    while(i!=bufferB.end())
+    {   
+        char pktdata[20];
+        pkt packetinbuffer = i->second; 
+        strncpy(pktdata,packetinbuffer.payload, sizeof(pktdata));
+        int i=0;
+        while (i < 20){
+            packetinbuffer.payload[i] = pktdata[i];
+            i++;
+        }
+        tolayer5(1,pktdata);
+        bufferB.erase(i); 
+        B.base_number++;
+        i = bufferB.find(B.base_number);
+    }
+    return B.base_number;
+
+}
 
 void A_output(struct msg message){
     buffer.push_back(message);

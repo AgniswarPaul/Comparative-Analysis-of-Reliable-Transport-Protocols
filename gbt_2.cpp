@@ -82,7 +82,7 @@ void udt_send() // change name
         pkt livepacket = {};
         int i=0;
         while (i < 20){
-            livepacket.payload[i] = message.data[i];
+            livepacket.payload[i] = message.data[i];  // Need to change into a different function
             i++;
         }
         livepacket.seqnum = A.next_seq_A;
