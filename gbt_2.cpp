@@ -17,7 +17,7 @@ struct HostA
     int base_number;
     int next_buffer; 
     int size_of_window;
-    struct pkt buffer_pakcet_A[size_of_buffer];
+    
 } A;
 
 
@@ -25,7 +25,7 @@ struct HostB
 {
     int seq_B;
     int ack_B;
-    struct pkt B;
+    
 } B;
 
 struct msg
@@ -33,7 +33,7 @@ struct msg
     char data[20];
 };
 
-vector <msg> buffer; 
+vector<msg> buffer; 
 
 struct pkt
 {
