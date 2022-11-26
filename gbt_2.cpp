@@ -66,11 +66,11 @@ bool ispacket_not_corrupt(struct pkt receivepacket){
 
 void A_init() 
 {
-    seq_A=0;
-    ack_A=0;
-    size_of_window=getwinsize();
-    base_number=0;
-    next_seq_A=0;
+    A.seq_A=0;
+    A.ack_A=0;
+    A.size_of_window=getwinsize();
+    A.base_number=0;
+    A.next_seq_A=0;
 
 }
 
