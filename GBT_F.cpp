@@ -27,10 +27,7 @@ struct HostA
     int seq_A;
     int ack_A;
     int next_seq_A;
-    
     int next_buffer; 
-    
-    
 } A;
 
 
@@ -38,14 +35,17 @@ struct HostB
 {
     int seq_B;
     int ack_B;
-    
+ 
 } B;
 
 struct pkt livepacket;
 
 struct msg message;
 
-int size_of_window, base_number;  
+int size_of_window, base_number; 
+
+int next_seq_num;
+
 static const float RTT = 16.0; 
 
 vector <msg> buffer;
@@ -100,19 +100,19 @@ void makeack(int acknum)
 
 void gbn_send()
 {
-    while((A.next_seq_A < buffer.size()) && (A.next_seq_A < A.base_number + A.size_of_window))
+    while((next_seq_num < buffer.size()) && (next_seq_num < base_number + size_of_window))
     {
         pkt livepacket = {};
         strncpy(livepacket.payload, message.data, sizeof(livepacket.payload));
-        livepacket.seqnum = A.next_seq_A;
+        livepacket.seqnum = next_seq_num;
         livepacket.acknum = A.ack_A;
         livepacket.checksum = build_checksum(livepacket);
         tolayer3(0,livepacket);
         
 
-        if(A.base_number == A.next_seq_A)
+        if(base_number == next_seq_num)
             starttimer(0,RTT);
-    A.next_seq_A++;    
+    next_seq_num++;    
     }
     
 }
@@ -123,7 +123,6 @@ void gbn_send()
 void A_output(struct msg message)
 {
 	buffer.push_back(message);
-    //sending the data to lower layer
     gbn_send();
 }
 
@@ -134,7 +133,7 @@ void A_input(struct pkt packet)
     {
         base_number = packet.acknum + 1;
 
-        if(base_number == A.next_seq_A)
+        if(base_number == next_seq_num)
             stoptimer(0);
         else
         {
@@ -147,7 +146,7 @@ void A_input(struct pkt packet)
 /* called when A's timer goes off */
 void A_timerinterrupt()
 {
-	A.next_seq_A = base_number;
+	next_seq_num = base_number;
     gbn_send();
 }  
 
@@ -159,7 +158,7 @@ void A_init()
     A.ack_A = 0;
     size_of_window = getwinsize();
     base_number = 0;
-    A.next_seq_A = 0;
+    next_seq_num = 0;
 }
 
 /* Note that with simplex transfer from a-to-B, there is no B_output() */
