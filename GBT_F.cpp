@@ -34,8 +34,6 @@ struct HostA
 struct HostB
 {
     int seq_B;
-    int ack_B;
- 
 } B;
 
 struct pkt livepacket;
