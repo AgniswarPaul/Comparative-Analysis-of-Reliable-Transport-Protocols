@@ -7,7 +7,7 @@
 
 float TIMEOUT = 20.0;
 
-static const float RTT = 64.0; // Figure out Later
+static const float RTT = 64.0; 
 
 struct HostA
 {
@@ -75,7 +75,7 @@ void A_init()
 }
 
 
-void udt_send() // change name
+void gbn_send() // change name
 {
     while((A.next_seq_A < buffer.size()) && (A.next_seq_A < A.base_number + A.size_of_window))
     {
@@ -102,7 +102,7 @@ void udt_send() // change name
 
 void A_output(struct msg message){
     buffer.push_back(message);
-    udt_send();
+    gbn_send();
 
 }
 
@@ -110,7 +110,7 @@ void A_output(struct msg message){
 void A_timerinterrupt()
 {
     A.next_seq_A=A.base_number;
-    udt_send();
+    gbn_send();
 }
 
 void A_input(struct pkt receivepacket) {
