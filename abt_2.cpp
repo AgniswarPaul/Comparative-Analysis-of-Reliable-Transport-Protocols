@@ -82,7 +82,7 @@ void A_output(struct msg message)
 
 void A_input(struct pkt packet) {
     if (ispacket_not_corrupt(packet)){
-        if(packet.acknum == A.seq_num_of_A){
+        if(packet.acknum == A.seq_A){
             stoptimer(0);
             A.seq_A = 1 - A.seq_A;
             if(!buffer.empty())
