@@ -83,3 +83,38 @@ bool ispacket_not_corrupt(struct pkt receivepacket){
         
 }
 
+void udt_send(int seqnum, bool sr) // change name
+{
+    if((seqnum >= A.base_number) && (seqnum < A.base_number + A.size_of_window) && sr)
+    {
+        pkt livepacket = {};
+        int i=0;
+        while (i < 20){
+            livepacket.payload[i] = message.data[i];
+            i++;
+        }
+        livepacket.seqnum = seqnum;
+        livepacket.acknum = A.ack_A;
+        livepacket.checksum = build_checksum(livepacket);
+        tolayer3(0,livepacket);
+        buffer[seqnum].simtime = get_sim_time();
+        packettimer.push_back(seqnum);
+
+        if(packettime.size() == 1)
+        {
+            starttimer(0,RTT);
+        }
+
+   
+    }
+    
+}
+
+
+void A_output(struct msg message){
+    buffer.push_back(message);
+    udt_send();
+
+}
+
+
