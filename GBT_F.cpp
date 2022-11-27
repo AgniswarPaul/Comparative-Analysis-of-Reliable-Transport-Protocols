@@ -26,8 +26,7 @@ struct HostA
 {
     int seq_A;
     int ack_A;
-    int next_seq_A;
-    int next_buffer; 
+    
 } A;
 
 
@@ -37,8 +36,6 @@ struct HostB
 } B;
 
 struct pkt livepacket;
-
-struct msg message;
 
 int size_of_window, base_number; 
 
