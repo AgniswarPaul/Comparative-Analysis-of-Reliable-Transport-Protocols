@@ -28,7 +28,7 @@ struct pkt
 
 struct datapkt
 {
-    float simtime;
+    float start;
     bool ackdone;
     char data[20];
 };
@@ -56,10 +56,8 @@ struct HostB
     int base_number;
 } B;
 
+struct pkt livepacket;
 
-vector<datapkt> buffer;
-deque<int> packettimer;
-map <int, pkt> bufferB;
 
 int build_checksum(struct pkt packet)
 {
@@ -81,44 +79,47 @@ bool is_packet_corrupt(struct pkt packet){
         
 }
 
-void udt_send(int seqnum, bool sr) // change name
+void makeack(int acknum)
 {
-    if((seqnum >= A.base_number) && (seqnum < A.base_number + A.size_of_window) && sr)
-    {
-        pkt livepacket = {};
-        int i=0;
-        while (i < 20){
-            livepacket.payload[i] = message.data[i]; // Need to change into a different function
-            i++;
-        }
-        livepacket.seqnum = seqnum;
-        livepacket.acknum = A.ack_A;
-        livepacket.checksum = build_checksum(livepacket);
-        tolayer3(0,livepacket);
-        buffer[seqnum].simtime = get_sim_time();
-        packettimer.push_back(seqnum);
+    pkt ackpacket = {};
+    ackpacket.acknum = acknum;
+    ackpacket.checksum = calc_checksum(ackpacket);
+    tolayer3(1,ackpacket);
+}
 
-        if(packettimer.size() == 1)
+void msgpkt(datapkt message, int seqnum, int acknum)
+{
+
+    pkt currentpacket = {};
+    strncpy(currentpacket.payload, message.data, sizeof(currentpacket.payload));
+    currentpacket.seqnum = seqnum;
+    currentpacket.acknum = acknum;
+    currentpacket.checksum = calc_checksum(currentpacket);
+    tolayer3(0,currentpacket);
+
+}
+
+void sr_send(int seqnum, bool sr)
+{
+    
+    if((seqnum >= A.base_number) && (seqnum < A.base_number + A.size_of_window) && sr)
+    {   
+        messagetopacket(buffer[seqnum],seqnum,acknumA);
+        buffer[seqnum].start = get_sim_time();
+        packettime.push_back(seqnum);
+        
+        if(packettime.size() == 1)
         {
             starttimer(0,TIMEOUT);
-        }
-        
-    else if ((A.next_seq_A >= A.base_number) && (A.next_seq_A <= A.base_number + A.size_of_window))
+        }        
+    }
+    
+    else if ((next_seq_num >= A.base_number) && (next_seq_num <= A.base_number + A.size_of_window))
     {
         
-        messagetopacket(buffer[A.next_seq_A],A.next_seq_A,A.ack_A);
-        pkt livepacket = {};
-        int i=0;
-        while (i < 20){
-            livepacket.payload[i] = message.data[i];
-            i++;
-        }
-        livepacket.seqnum = A.next_seq_A;
-        livepacket.acknum = A.ack_A;
-        livepacket.checksum = build_checksum(livepacket);
-        tolayer3(0,livepacket); 
-        buffer[A.next_seq_A].start = get_sim_time();
-        packettime.push_back(A.next_seq_A);
+        messagetopacket(buffer[next_seq_num],next_seq_num,A.ack_A); 
+        buffer[next_seq_num].start = get_sim_time();
+        packettime.push_back(next_seq_num);
 
         if(packettime.size() == 1)
         {
@@ -127,12 +128,9 @@ void udt_send(int seqnum, bool sr) // change name
         }
             
 
-        A.next_seq_A++;
+        next_seq_num++;
     }
-
-
-   
-    }
+     
     
 }
 
@@ -147,11 +145,6 @@ int bufferatB(int B.base_number)
         char pktdata[20];
         pkt packetinbuffer = i->second; 
         strncpy(pktdata,packetinbuffer.payload, sizeof(pktdata));
-        int i=0;
-        while (i < 20){
-            packetinbuffer.payload[i] = pktdata[i];
-            i++;
-        }
         tolayer5(1,pktdata);
         bufferB.erase(i); 
         B.base_number++;
@@ -161,10 +154,57 @@ int bufferatB(int B.base_number)
 
 }
 
-void A_output(struct msg message){
-    buffer.push_back(message);
-    udt_send();
+void A_output(struct msg message)
+{
+    float current_time = get_sim_time();
+    datapkt currentmsg;
+    currentmsg.ackdone = false;
+    currentmsg.start = -1;
+    strncpy(currentmsg.data,message.data,sizeof(message.data));
+    buffer.push_back(currentmsg);
+    sr_send(-1,false);
 
 }
 
+void A_input(struct pkt packet)
+{
+    if(!is_packet_corrupt(packet))
+    {
+         
+        buffer[packet.acknum].ackdone = true;
+
+        if(A.base_number == packet.acknum)
+        {    
+            while(buffer.size()>A.base_number && buffer[A.base_number].ackdone)
+            {
+                A.base_number++;
+            } 
+            while(next_seq_num < A.base_number + A.size_of_window && next_seq_num < buffer.size())
+            {
+                sr_send(-1,false); 
+            }
+        } 
+
+        if(packettime.front() == packet.acknum)
+        {    
+            
+            packettime.pop_front();
+            stoptimer(0);
+
+            while(packettime.size()>0 && packettime.size() <= A.size_of_window && buffer[packettime.front()].ackdone)
+            {
+                
+                packettime.pop_front();
+            }
+            if(packettime.size()>0 && packettime.size()<= A.size_of_window)
+            {
+                float nextinterrupt = buffer[packettime.front()].start + TIMEOUT - get_sim_time();
+                stoptimer(0);
+                starttimer(0,nextinterrupt);
+            }
+        }
+
+    }
+
+}
 
