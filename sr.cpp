@@ -208,3 +208,65 @@ void A_input(struct pkt packet)
 
 }
 
+void A_timerinterrupt()
+{
+
+    int seqnuminterrupted = packettime.front();
+    packettime.pop_front();
+
+    while(packettime.size() > 0 && packettime.size() <= A.size_of_window && buffer[packettime.front()].ackdone)
+    {
+        packettime.pop_front();
+    }
+    if(packettime.size()>0 && packettime.size() <= A.size_of_window)
+    {   
+        float nextinterrupt = buffer[packettime.front()].start + RTT - get_sim_time();
+        starttimer(0,nextinterrupt);
+    }
+    
+    udt_send(seqnuminterrupted,true);
+} 
+
+void A_init()
+{
+    A.seq_A = 0;
+    A.ack_A = 0;
+    A.size_of_window = getwinsize()/2;  
+    next_seq_num = 0;
+    A.base_number = 0;
+
+}
+
+void B_input(struct pkt packet)
+{
+    if(!is_packet_corrupt(packet) && (B.base_number == packet.seqnum))
+    { 
+        tolayer5(1,packet.payload);
+        makeack(packet.seqnum);
+        B.base_number++;
+
+    }
+
+    else if(!is_packet_corrupt(packet) && (B.base_number <= packet.seqnum) && (packet.seqnum < B.base_number + B.size_of_window) )
+    {
+        bufferB[packet.seqnum] = packet;
+        makeack(packet.seqnum);
+    }
+
+    else if(!is_packet_corrupt(packet))
+    {
+        makeack(packet.seqnum);
+    }
+    
+    
+   B.base_number = sendbuffered(B.base_number);
+}
+
+void B_init()
+{
+    B.size_of_window = getwinsize()/2;
+    B.base_number = 0;
+}
+
+
+
