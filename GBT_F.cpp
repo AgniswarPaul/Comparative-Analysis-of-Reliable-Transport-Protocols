@@ -45,20 +45,13 @@ static const float RTT = 16.0;
 
 vector<msg> buffer;
 
-// bool IsCorrupted(struct pkt packet);
-// int build_checksum(pkt packet);
-// void gbn_send();
-// void messagetopacket(msg message, int seqnum, int acknum);
-// void makeack(int acknum);
 
-
-
-bool ispacket_not_corrupt(struct pkt packet){
+bool is_packet_corrupt(struct pkt packet){
     if(packet.checksum == build_checksum(packet)){
-        return true;
+        return false;
     }
     else{
-        return false;
+        return true;
     }
         
 }
