@@ -46,7 +46,7 @@ int next_seq_num;
 
 static const float RTT = 16.0; 
 
-vector <msg> buffer;
+vector<msg> buffer;
 
 // bool IsCorrupted(struct pkt packet);
 // int build_checksum(pkt packet);
@@ -76,17 +76,17 @@ int build_checksum(struct pkt packet)
     return checksum;
 }
 
-// void messagetopacket(msg message, int seqnum, int acknum)
-// {
+void msgpkt(msg message, int seqnum, int acknum)
+{
 
-//     pkt livepacket = {};
-//     strncpy(livepacket.payload, message.data, sizeof(livepacket.payload));
-//     livepacket.seqnum = seqnum;
-//     livepacket.acknum = acknum;
-//     livepacket.checksum = build_checksum(livepacket);
-//     tolayer3(0,livepacket);
+    pkt livepacket = {};
+    strncpy(livepacket.payload, message.data, sizeof(livepacket.payload));
+    livepacket.seqnum = seqnum;
+    livepacket.acknum = acknum;
+    livepacket.checksum = build_checksum(livepacket);
+    tolayer3(0,livepacket);
 
-// }
+}
 
 void makeack(int acknum)
 {
@@ -100,12 +100,7 @@ void gbn_send()
 {
     while((next_seq_num < buffer.size()) && (next_seq_num < base_number + size_of_window))
     {
-        pkt livepacket = {};
-        strncpy(livepacket.payload, message.data, sizeof(livepacket.payload));
-        livepacket.seqnum = next_seq_num;
-        livepacket.acknum = A.ack_A;
-        livepacket.checksum = build_checksum(livepacket);
-        tolayer3(0,livepacket);
+        msgpkt(buffer[next_seq_num],next_seq_num,A.ack_A);
         
 
         if(base_number == next_seq_num)
