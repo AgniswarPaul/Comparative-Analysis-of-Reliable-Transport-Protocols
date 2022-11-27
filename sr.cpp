@@ -10,7 +10,7 @@
 
 using namespace std;
 
-float TIMEOUT = 60.0;
+float TIMEOUT = 38.0;
 
 
 struct msg
@@ -34,29 +34,26 @@ struct datapkt
 };
 
 
-vector<datapkt> buffer;
+vector<datapkt> bufferA;
 deque<int> packettime;
 map <int, pkt> bufferB;
+
+int next_seq_num; 
 
 struct HostA
 {
     int seq_A;
     int ack_A;
-    int next_seq_A;
     int base_number;
-    int next_buffer; 
     int size_of_window;
-    struct pkt buffer_pakcet_A[size_of_buffer];
 } A;
 
 
 struct HostB
 {
     int seq_B;
-    int ack_B;
     int size_of_window;
     int base_number;
-    struct pkt B;
 } B;
 
 
@@ -64,22 +61,22 @@ vector<datapkt> buffer;
 deque<int> packettimer;
 map <int, pkt> bufferB;
 
-int build_checksum(struct pkt livepacket)
+int build_checksum(struct pkt packet)
 {
     int checksum = 0;
-    checksum += livepacket.seqnum;
-    checksum += livepacket.acknum;
+    checksum += packet.seqnum;
+    checksum += packet.acknum;
     for (int i = 0; i < 20; ++i)
         checksum += packet.payload[i];
     return checksum;
 }
 
-bool ispacket_not_corrupt(struct pkt receivepacket){
-    if(receivepacket.checksum == build_checksum(receivepacket)){
-        return true;
+bool is_packet_corrupt(struct pkt packet){
+    if(packet.checksum == build_checksum(packet)){
+        return false;
     }
     else{
-        return false;
+        return true;
     }
         
 }
