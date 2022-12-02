@@ -160,12 +160,31 @@ void A_output(struct msg message)
     float current_time = get_sim_time();
     datapkt currentmsg;
     currentmsg.ackdone = false;
-    currentmsg.start = -1;
+    currentmsg.start = -1;   //DOUBT
     strncpy(currentmsg.data,message.data,sizeof(message.data));
     bufferA.push_back(currentmsg);
     sr_send(-1,false);
 
 }
+
+void A_timerinterrupt()
+{
+
+    int seqnuminterrupted = packettime.front();
+    packettime.pop_front();
+
+    while(packettime.size() > 0 && packettime.size() <= A.size_of_window && bufferA[packettime.front()].ackdone)
+    {
+        packettime.pop_front();
+    }
+    if(packettime.size()>0 && packettime.size() <= A.size_of_window)
+    {   
+        float nextinterrupt = bufferA[packettime.front()].start + RTT - get_sim_time();
+        starttimer(0,nextinterrupt);
+    }
+    
+    sr_send(seqnuminterrupted,true);
+} 
 
 void A_input(struct pkt packet)
 {
@@ -209,24 +228,7 @@ void A_input(struct pkt packet)
 
 }
 
-void A_timerinterrupt()
-{
 
-    int seqnuminterrupted = packettime.front();
-    packettime.pop_front();
-
-    while(packettime.size() > 0 && packettime.size() <= A.size_of_window && bufferA[packettime.front()].ackdone)
-    {
-        packettime.pop_front();
-    }
-    if(packettime.size()>0 && packettime.size() <= A.size_of_window)
-    {   
-        float nextinterrupt = bufferA[packettime.front()].start + RTT - get_sim_time();
-        starttimer(0,nextinterrupt);
-    }
-    
-    udt_send(seqnuminterrupted,true);
-} 
 
 void A_init()
 {
