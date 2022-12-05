@@ -104,7 +104,7 @@ void usegbn()
 void A_output(struct msg message)
 {
 	buffer.push_back(message);
-    	usegbn();
+    usegbn();
 }
 
 /* called from layer 3, when a packet arrives for layer 4 */
@@ -128,7 +128,7 @@ void A_input(struct pkt packet)
 void A_timerinterrupt()
 {
 	next_seq_num = base_of_window;
-    	usegbn();
+    usegbn();
 }  
 
 /* the following routine will be called once (only) before any other */
